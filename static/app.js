@@ -165,8 +165,8 @@ function filterTasks(filter) {
 addTaskBtn.addEventListener('click', addTask);
 
 taskInput.addEventListener('keypress', function (e) {
-    // BUG 10: Wrong key code check (uses deprecated keyCode property)
-    if (e.keyCode === 13) {
+    // Fixed BUG-009: Replaced deprecated keyCode property with key property
+    if (e.key === 'Enter') {
         addTask();
     }
 });
