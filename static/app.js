@@ -137,8 +137,8 @@ function renderTasks() {
 
 // Update task count
 function updateTaskCount() {
-    // BUG 9: Incorrect count logic, doesn't filter out completed tasks
-    taskCount.textContent = tasks.length;
+    // Fixed BUG-008: Count only uncompleted tasks
+    taskCount.textContent = tasks.filter(task => !task.completed).length;
 }
 
 // Filter tasks by status
