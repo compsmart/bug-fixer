@@ -1,0 +1,200 @@
+{
+    "bugs": [
+        {
+            "id": "BUG-001",
+            "title": "Local Storage Key Mismatch",
+            "description": "The application loads tasks using 'taskManager' key but saves them with 'tasks' key, causing data loss on page refresh.",
+            "severity": "High",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                3,
+                107
+            ],
+            "steps": [
+                "Add a task",
+                "Refresh the page",
+                "Observe that the task is gone"
+            ],
+            "expectedBehavior": "Tasks should persist after page refresh",
+            "actualBehavior": "Tasks disappear after page refresh",
+            "fix": "Use the same key name in both the retrieval and storage operations"
+        },
+        {
+            "id": "BUG-002",
+            "title": "Event Listener on Non-existent Element",
+            "description": "There is an event listener attached to a 'clearCompleted' element that doesn't exist in the HTML.",
+            "severity": "Medium",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                14
+            ],
+            "steps": [
+                "Open browser console",
+                "Observe error about null element"
+            ],
+            "expectedBehavior": "No JavaScript errors should appear in console",
+            "actualBehavior": "TypeError: Cannot add event listener to null",
+            "fix": "Either add the missing 'clearCompleted' button to HTML or remove the event listener"
+        },
+        {
+            "id": "BUG-003",
+            "title": "Non-unique Task IDs",
+            "description": "Task IDs are based on array length, which makes them non-unique across sessions.",
+            "severity": "Medium",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                31
+            ],
+            "steps": [
+                "Add a task",
+                "Delete the task",
+                "Add another task",
+                "Observe it has the same ID as the deleted task"
+            ],
+            "expectedBehavior": "Each task should have a globally unique ID",
+            "actualBehavior": "Task IDs can repeat, causing potential confusion when deleting tasks",
+            "fix": "Use a unique ID generation method like timestamp + random number or UUID"
+        },
+        {
+            "id": "BUG-004",
+            "title": "Tasks Added to Beginning Instead of End",
+            "description": "New tasks are added to the beginning of the list instead of the end.",
+            "severity": "Low",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                37
+            ],
+            "steps": [
+                "Add multiple tasks",
+                "Observe that newer tasks appear at the top"
+            ],
+            "expectedBehavior": "New tasks should be added to the end of the list",
+            "actualBehavior": "New tasks are added to the beginning of the list",
+            "fix": "Use 'push()' instead of 'unshift()'"
+        },
+        {
+            "id": "BUG-005",
+            "title": "Loose Equality in Delete Function",
+            "description": "Delete task function uses loose equality (==) which can lead to unexpected behavior.",
+            "severity": "Low",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                54
+            ],
+            "steps": [
+                "Create tasks with string and number IDs",
+                "Attempt to delete tasks"
+            ],
+            "expectedBehavior": "Only exact ID matches should be deleted",
+            "actualBehavior": "Type coercion may cause the wrong task to be deleted",
+            "fix": "Use strict equality (===) for ID comparison"
+        },
+        {
+            "id": "BUG-006",
+            "title": "Task Completion Toggle Not Working",
+            "description": "Toggling task completion only sets it to true, can't uncomplete tasks.",
+            "severity": "High",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                61
+            ],
+            "steps": [
+                "Add a task",
+                "Mark it as completed",
+                "Try to mark it as incomplete"
+            ],
+            "expectedBehavior": "Clicking the complete button should toggle between completed and not completed",
+            "actualBehavior": "Tasks can only be marked as completed, not unmarked",
+            "fix": "Change to 'task.completed = !task.completed' to properly toggle"
+        },
+        {
+            "id": "BUG-007",
+            "title": "Incorrect forEach Parameters in renderTasks",
+            "description": "The forEach loop uses index and item parameters in wrong order.",
+            "severity": "Critical",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                96
+            ],
+            "steps": [
+                "Add multiple tasks",
+                "Observe that task content is undefined"
+            ],
+            "expectedBehavior": "Tasks should render properly with correct text",
+            "actualBehavior": "Task content is undefined and causes rendering errors",
+            "fix": "Correct parameter order to '(task, index) => { ... }'"
+        },
+        {
+            "id": "BUG-008",
+            "title": "Incorrect Task Count",
+            "description": "Task counter shows total count instead of remaining (uncompleted) tasks.",
+            "severity": "Low",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                129
+            ],
+            "steps": [
+                "Add several tasks",
+                "Mark some as completed",
+                "Observe that count includes completed tasks"
+            ],
+            "expectedBehavior": "Count should only show uncompleted tasks",
+            "actualBehavior": "Count shows all tasks including completed ones",
+            "fix": "Filter tasks to count only uncompleted: 'tasks.filter(task => !task.completed).length'"
+        },
+        {
+            "id": "BUG-009",
+            "title": "Deprecated keyCode Property Usage",
+            "description": "The application uses the deprecated keyCode property for keyboard event handling.",
+            "severity": "Low",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                163
+            ],
+            "steps": [
+                "Focus on input field",
+                "Press Enter key"
+            ],
+            "expectedBehavior": "Pressing Enter should add the task",
+            "actualBehavior": "Function works but uses deprecated API that may stop working in future browser versions",
+            "fix": "Use e.key === 'Enter' instead of e.keyCode === 13"
+        },
+        {
+            "id": "BUG-010",
+            "title": "Missing Error Handling for JSON Parsing",
+            "description": "The application doesn't handle potential JSON parsing errors from corrupt localStorage data.",
+            "severity": "Medium",
+            "status": "Open",
+            "assignedTo": "Developer",
+            "location": "app.js",
+            "lineNumbers": [
+                3
+            ],
+            "steps": [
+                "Manually set invalid JSON in localStorage",
+                "Reload the page"
+            ],
+            "expectedBehavior": "Application should gracefully handle corrupt data",
+            "actualBehavior": "Application crashes with a JSON parse error",
+            "fix": "Add try-catch block around JSON.parse operations"
+        }
+    ]
+}
