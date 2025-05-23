@@ -86,8 +86,8 @@ function clearCompletedTasks() {
 
 // Save tasks to local storage
 function saveTasks() {
-    // BUG 7: Wrong storage key (inconsistent with retrieval)
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    // Fixed: Using consistent storage key that matches retrieval
+    localStorage.setItem('taskManager', JSON.stringify(tasks));
 }
 
 // Render tasks based on current filter
