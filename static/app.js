@@ -65,8 +65,8 @@ function deleteTask(id) {
 function toggleTaskCompletion(id) {
     tasks = tasks.map(task => {
         if (task.id === id) {
-            // BUG 6: Doesn't toggle, only sets to true (can't uncomplete)
-            task.completed = true;
+            // Fixed BUG-006: Now properly toggles between completed and not completed
+            task.completed = !task.completed;
         }
         return task;
     });
