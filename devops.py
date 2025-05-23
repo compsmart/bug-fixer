@@ -2,22 +2,50 @@
 """
 Azure DevOps Work Item API Script
 
-This script mimics making an API request to Azure DevOps to retrieve work item information.
-It takes a work item ID as a parameter and returns a sample JSON response.
+This script imports bug data from bugs.json and provides it in a format similar to Azure DevOps work items.
+It takes a bug ID as a parameter and returns the corresponding bug information.
 
 Usage:
-    python devops.py 12345
+    python devops.py BUG-001
 
-Where 12345 is the ID of the work item you want to retrieve.
+Where BUG-001 is the ID of the bug you want to retrieve.
 """
 
 import sys
 import json
 import argparse
 import datetime
+import os
 from typing import Dict, Any, Optional
 
-# Sample work items to mimic API response
+# Load bugs from bugs.json
+
+
+def load_bugs_from_json() -> Dict[str, Dict]:
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        bugs_file_path = os.path.join(script_dir, 'bugs.json')
+
+        with open(bugs_file_path, 'r') as f:
+            data = json.load(f)
+
+        # Convert the list of bugs to a dictionary with bug ID as the key
+        bugs_dict = {}
+        for bug in data.get('bugs', []):
+            bug_id = bug.get('id')
+            if bug_id:
+                bugs_dict[bug_id] = bug
+
+        return bugs_dict
+    except Exception as e:
+        print(f"Error loading bugs.json: {e}")
+        return {}
+
+
+# Load bugs from the JSON file
+BUGS = load_bugs_from_json()
+
+# Sample work items structure to maintain compatibility with existing code
 SAMPLE_WORK_ITEMS = {
     "12345": {
         "id": 12345,
@@ -117,93 +145,188 @@ SAMPLE_WORK_ITEMS = {
     }
 }
 
-def get_work_item(work_item_id: str, organization: str = "organization", project: str = "project", pat: Optional[str] = None) -> Dict[str, Any]:
+
+def get_work_item(bug_id: str, organization: str = "organization", project: str = "project", pat: Optional[str] = None) -> Dict[str, Any]:
     """
-    Get work item details from Azure DevOps.
-    
+    Get bug details converted to Azure DevOps work item format.
+
     Args:
-        work_item_id: The ID of the work item to retrieve
-        organization: Azure DevOps organization name
-        project: Azure DevOps project name
-        pat: Personal Access Token for authentication
-        
+        bug_id: The ID of the bug to retrieve
+        organization: Azure DevOps organization name (for API URL construction)
+        project: Azure DevOps project name (for API URL construction)
+        pat: Personal Access Token for authentication (not used in this implementation)
+
     Returns:
-        Dictionary containing work item details
+        Dictionary containing bug details in a work item format
     """
-    # In a real implementation, this would make an actual API call to Azure DevOps
-    # For demonstration purposes, we'll return sample data instead
-    
-    # This is how you would make an actual API call (using the requests library):
-    # url = f"https://dev.azure.com/{organization}/{project}/_apis/wit/workitems/{work_item_id}?api-version=7.0"
-    # headers = {"Content-Type": "application/json"}
-    # auth = (username, pat)  # PAT is used as password with empty username
-    # response = requests.get(url, headers=headers, auth=auth)
-    # return response.json() if response.status_code == 200 else {"error": f"Failed: {response.status_code}"}
-    
-    # Instead, return simulated data
-    if work_item_id in SAMPLE_WORK_ITEMS:
-        return SAMPLE_WORK_ITEMS[work_item_id]
-    else:
-        # Generate a fake work item if ID doesn't match samples
-        return {
-            "id": int(work_item_id),
+    # Check if the bug ID exists in our loaded bugs
+    if bug_id in BUGS:
+        bug = BUGS[bug_id]
+
+        # Convert bug format to match Azure DevOps work item format
+        work_item = {
+            "id": bug_id,
             "rev": 1,
             "fields": {
-                "System.Id": int(work_item_id),
-                "System.Title": f"Sample work item {work_item_id}",
+                "System.Id": bug_id,
+                "System.Title": bug.get("title", "No Title"),
+                "System.State": bug.get("status", "Unknown"),
+                "System.CreatedDate": datetime.datetime.now().isoformat(),
+                "System.CreatedBy": {
+                    "displayName": "Bug Creator",
+                    "uniqueName": "bug.creator@company.com",
+                    "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "System.AssignedTo": {
+                    "displayName": bug.get("assignedTo", "Unassigned"),
+                    "uniqueName": f"{bug.get('assignedTo', 'unassigned').lower().replace(' ', '.')}@company.com",
+                    "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "System.WorkItemType": "Bug",
+                "System.Description": bug.get("description", "No description"),
+                "System.Tags": bug.get("severity", "Unknown"),
+                "Microsoft.VSTS.Common.Priority": _map_severity_to_priority(bug.get("severity", "Unknown")),
+                "Microsoft.VSTS.Common.Severity": bug.get("severity", "Unknown"),
+                "Custom.Location": bug.get("location", "Unknown"),
+                "Custom.LineNumbers": bug.get("lineNumbers", []),
+                "Custom.ExpectedBehavior": bug.get("expectedBehavior", "Unknown"),
+                "Custom.ActualBehavior": bug.get("actualBehavior", "Unknown"),
+                "Custom.Steps": bug.get("steps", []),
+                "Custom.Fix": bug.get("fix", "No fix proposed")
+            },
+            "_links": {
+                "self": {
+                    "href": f"https://dev.azure.com/{organization}/{project}/_apis/wit/workItems/{bug_id}"
+                },
+                "html": {
+                    "href": f"https://dev.azure.com/{organization}/{project}/_workitems/edit/{bug_id}"
+                }
+            },
+            "url": f"https://dev.azure.com/{organization}/{project}/_apis/wit/workItems/{bug_id}"
+        }
+        return work_item
+    elif bug_id in SAMPLE_WORK_ITEMS:
+        # Return from the original sample work items if bug not found but ID matches
+        return SAMPLE_WORK_ITEMS[bug_id]
+    else:
+        # Generate a fake work item if ID doesn't match any known bug or sample
+        return {
+            "id": bug_id,
+            "rev": 1,
+            "fields": {
+                "System.Id": bug_id,
+                "System.Title": f"Unknown bug {bug_id}",
                 "System.State": "New",
                 "System.CreatedDate": datetime.datetime.now().isoformat(),
                 "System.CreatedBy": {
-                    "displayName": "Brad Johnson",
-                    "uniqueName": "brad.johnson@company.com",
+                    "displayName": "System",
+                    "uniqueName": "system@company.com",
                     "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
                 },
-                "System.WorkItemType": "Task",
-                "System.Description": f"This is a generated sample work item with ID {work_item_id}.",
+                "System.WorkItemType": "Bug",
+                "System.Description": f"No bug found with ID {bug_id}.",
                 "Microsoft.VSTS.Common.Priority": 3
             },
             "_links": {
                 "self": {
-                    "href": f"https://dev.azure.com/organization/project/_apis/wit/workItems/{work_item_id}"
+                    "href": f"https://dev.azure.com/{organization}/{project}/_apis/wit/workItems/{bug_id}"
                 }
             }
         }
 
+
+def _map_severity_to_priority(severity: str) -> int:
+    """Map severity string to a priority number"""
+    severity_map = {
+        "Critical": 1,
+        "High": 2,
+        "Medium": 3,
+        "Low": 4
+    }
+    # Default to 3 (Medium) if severity not recognized
+    return severity_map.get(severity, 3)
+
+
 def main():
-    """Main function to handle command-line arguments and fetch work item data."""
-    parser = argparse.ArgumentParser(description='Retrieve work item information from Azure DevOps')
-    parser.add_argument('work_item_id', help='ID of the work item to retrieve')
-    parser.add_argument('--organization', '-o', default='organization', 
-                        help='Azure DevOps organization name')
-    parser.add_argument('--project', '-p', default='project', 
-                        help='Azure DevOps project name')
-    parser.add_argument('--pat', help='Personal Access Token for Azure DevOps authentication')
+    """Main function to handle command-line arguments and fetch bug data."""
+    parser = argparse.ArgumentParser(
+        description='Retrieve bug information from bugs.json')
+    parser.add_argument('bug_id', nargs='?',
+                        help='ID of the bug to retrieve (e.g., BUG-001)')
+    parser.add_argument('--organization', '-o', default='organization',
+                        help='Azure DevOps organization name (for URL construction)')
+    parser.add_argument('--project', '-p', default='project',
+                        help='Azure DevOps project name (for URL construction)')
+    parser.add_argument(
+        '--pat', help='Personal Access Token (not used in this implementation)')
     parser.add_argument('--format', choices=['json', 'summary'], default='json',
                         help='Output format (json or summary)')
-    
+    parser.add_argument('--list', action='store_true',
+                        help='List all available bugs')
+
     args = parser.parse_args()
-    
-    # Get the work item data
-    work_item = get_work_item(args.work_item_id, args.organization, args.project, args.pat)
-    
+
+    # If --list flag is provided, list all available bugs
+    if args.list:
+        if not BUGS:
+            print("No bugs found in bugs.json")
+            return
+
+        print("\nAvailable Bugs:")
+        print("-" * 80)
+        for bug_id, bug in BUGS.items():
+            print(f"{bug_id}: {bug.get('title', 'No Title')} - {bug.get('severity', 'Unknown')} - {bug.get('status', 'Unknown')}")
+        print()
+        return
+
+    # Ensure bug_id is provided if not using --list
+    if not args.bug_id:
+        parser.error("bug_id is required unless --list is specified")
+
+    # Get the bug data
+    work_item = get_work_item(
+        args.bug_id, args.organization, args.project, args.pat)
+
     # Output based on chosen format
     if args.format == 'summary':
         try:
+            fields = work_item['fields']
             # Print a summary of the work item
-            print(f"\nWork Item #{work_item['id']} - {work_item['fields']['System.Title']}")
+            print(f"\nBug #{fields['System.Id']} - {fields['System.Title']}")
             print("-" * 80)
-            print(f"Type:        {work_item['fields'].get('System.WorkItemType', 'Unknown')}")
-            print(f"State:       {work_item['fields'].get('System.State', 'Unknown')}")
-            print(f"Assigned to: {work_item['fields'].get('System.AssignedTo', {}).get('displayName', 'Unassigned')}")
-            print(f"Priority:    {work_item['fields'].get('Microsoft.VSTS.Common.Priority', 'Not set')}")
-            print(f"Created:     {work_item['fields'].get('System.CreatedDate', 'Unknown')}")
+            print(f"Status:      {fields.get('System.State', 'Unknown')}")
+            print(
+                f"Severity:    {fields.get('Microsoft.VSTS.Common.Severity', 'Unknown')}")
+            print(
+                f"Assigned to: {fields.get('System.AssignedTo', {}).get('displayName', 'Unassigned')}")
+            print(f"Location:    {fields.get('Custom.Location', 'Unknown')}")
+            if 'Custom.LineNumbers' in fields and fields['Custom.LineNumbers']:
+                print(
+                    f"Line(s):     {', '.join(map(str, fields['Custom.LineNumbers']))}")
+
             print("\nDescription:")
-            print(work_item['fields'].get('System.Description', 'No description'))
+            print(fields.get('System.Description', 'No description'))
+
+            if 'Custom.Steps' in fields and fields['Custom.Steps']:
+                print("\nSteps to Reproduce:")
+                for i, step in enumerate(fields['Custom.Steps'], 1):
+                    print(f"{i}. {step}")
+
+            print("\nExpected Behavior:")
+            print(fields.get('Custom.ExpectedBehavior', 'Not specified'))
+
+            print("\nActual Behavior:")
+            print(fields.get('Custom.ActualBehavior', 'Not specified'))
+
+            print("\nProposed Fix:")
+            print(fields.get('Custom.Fix', 'No fix proposed'))
+
         except KeyError as e:
-            print(f"Error parsing work item data: {e}")
+            print(f"Error parsing bug data: {e}")
     else:
         # Print full JSON output
         print(json.dumps(work_item, indent=2))
+
 
 if __name__ == "__main__":
     main()
