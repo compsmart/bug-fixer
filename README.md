@@ -3,6 +3,7 @@
 This is a simple Task Manager web application intentionally created with bugs for educational purposes. The application includes several common programming errors and implementation issues that need to be fixed.
 
 The workflow and setup for the GITHUB copilot agent can be seen here.
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/cb48g2gcD6M/0.jpg)](https://www.youtube.com/watch?v=cb48g2gcD6M)
 
 ## Project Structure
